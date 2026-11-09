@@ -27,7 +27,7 @@ export const FIELDS: Field[] = [
   { key: "birth_date", prompt: "Tug'ilgan sanangiz.", example: "04.01.2006" },
   { key: "birth_place", prompt: "Tug'ilgan joyingiz.", example: "Andijon shahar" },
   { key: "nationality", prompt: "Millatingiz.", options: ["o'zbek", "qoraqalpoq", "tojik", "rus"] },
-  { key: "party", prompt: "Partiyaviyligingiz.", options: [NONE] },
+  { key: "party", prompt: "Partiyaviyligingiz.", options: [NONE], example: "O'zbekiston Liberal-demokratik partiyasi a'zosi" },
   { key: "education", prompt: "Ma'lumotingiz.", options: ["oliy", "tugallanmagan oliy", "o'rta maxsus", "o'rta"] },
   {
     key: "graduated",
@@ -35,19 +35,20 @@ export const FIELDS: Field[] = [
     example: "2023 yil, Andijon davlat universiteti",
   },
   { key: "specialty", prompt: "Ma'lumoti bo'yicha mutaxassisligingiz.", options: [NONE], example: "Kompyuter injiniringi" },
-  { key: "degree", prompt: "Ilmiy darajangiz.", options: [NONE] },
-  { key: "academic_title", prompt: "Ilmiy unvoningiz.", options: [NONE] },
+  { key: "degree", prompt: "Ilmiy darajangiz.", options: [NONE], example: "iqtisodiyot fanlari nomzodi" },
+  { key: "academic_title", prompt: "Ilmiy unvoningiz.", options: [NONE], example: "dotsent" },
   {
     key: "languages",
     prompt: "Qaysi chet tillarini bilasiz?",
     options: [NONE, "rus tili", "ingliz tili", "ingliz tili, rus tili"],
   },
-  { key: "military_rank", prompt: "Harbiy (maxsus) unvoningiz.", options: [NONE] },
-  { key: "awards", prompt: "Davlat mukofotlari bilan taqdirlanganmisiz (qanaqa)?", options: [NONE] },
+  { key: "military_rank", prompt: "Harbiy (maxsus) unvoningiz.", options: [NONE], example: "zaxiradagi leytenant" },
+  { key: "awards", prompt: "Davlat mukofotlari bilan taqdirlanganmisiz (qanaqa)?", options: [NONE], example: "«Shuhrat» medali (2020)" },
   {
     key: "deputy",
     prompt: "Xalq deputatlari Kengashi deputati yoki boshqa saylanadigan organ a'zosimisiz?",
     options: [NONE],
+    example: "Andijon shahar Kengashi deputati",
   },
 ];
 

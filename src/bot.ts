@@ -64,6 +64,7 @@ function grid(options: string[], perRow = 2): string[][] {
 function ask(f: Field, step: string, nav: string[]): Reply {
   let text = `<b>${step}</b>\n${f.prompt}`;
   if (f.example) text += `\n\n<i>Masalan: ${escapeHtml(f.example)}</i>`;
+  if (f.options?.length) text += `\n\n👇 Tugmani bosing yoki javobni o'zingiz yozing.`;
   const kb = [...grid(f.options ?? [], (f.options?.length ?? 0) > 4 ? 3 : 2)];
   if (nav.length) kb.push(nav);
   return { text, keyboard: kb };
