@@ -15,22 +15,26 @@ export interface Env {
   TELEGRAM_API?: string;
 }
 
-/** Ma'lumotlar shuncha kundan keyin avtomatik o'chiriladi */
+/** Tugallanmagan suhbatlar shuncha kundan keyin o'chiriladi */
 const KEEP_DAYS = 7;
+/** Saqlangan ma'lumotlar oxirgi foydalanishdan shuncha kun o'tib o'chiriladi */
+const PROFILE_DAYS = 180;
 
 async function webhookSecret(token: string): Promise<string> {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("obyektivka:" + token));
   return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 48);
 }
 
-async function load(db: D1Database, chatId: number): Promise<Session | null> {
-  const row = await db.prepare("SELECT data FROM sessions WHERE chat_id = ?").bind(chatId).first<{ data: string }>();
+type Table = "sessions" | "profiles";
+
+async function load(db: D1Database, table: Table, chatId: number): Promise<Session | null> {
+  const row = await db.prepare(`SELECT data FROM ${table} WHERE chat_id = ?`).bind(chatId).first<{ data: string }>();
   return row ? (JSON.parse(row.data) as Session) : null;
 }
-async function save(db: D1Database, chatId: number, s: Session | null) {
-  if (!s) return db.prepare("DELETE FROM sessions WHERE chat_id = ?").bind(chatId).run();
+async function save(db: D1Database, table: Table, chatId: number, s: Session | null) {
+  if (!s) return db.prepare(`DELETE FROM ${table} WHERE chat_id = ?`).bind(chatId).run();
   return db
-    .prepare("INSERT INTO sessions (chat_id, data, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(chat_id) DO UPDATE SET data = ?2, updated_at = ?3")
+    .prepare(`INSERT INTO ${table} (chat_id, data, updated_at) VALUES (?1, ?2, ?3) ON CONFLICT(chat_id) DO UPDATE SET data = ?2, updated_at = ?3`)
     .bind(chatId, JSON.stringify(s), Date.now())
     .run();
 }
@@ -58,13 +62,19 @@ function fileName(fio: string, ext: string): string {
 async function onMessage(env: Env, tg: Telegram, m: TgMessage) {
   if (m.chat.type !== "private") return;
   const chatId = m.chat.id;
-  const prev = await load(env.DB, chatId);
-  const res = handle(prev, toIncoming(m));
-  await save(env.DB, chatId, res.session);
+  const incoming = toIncoming(m);
+  const prev = await load(env.DB, "sessions", chatId);
+  // Saqlangan ma'lumotlar faqat /start da kerak
+  const isStart = !prev || /^\/start\b/.test(incoming.text ?? "");
+  const saved = isStart ? await load(env.DB, "profiles", chatId) : null;
+  const res = handle(prev, incoming, saved);
+  await save(env.DB, "sessions", chatId, res.session);
+  if (res.deleteProfile) await save(env.DB, "profiles", chatId, null);
   for (const r of res.replies) await tg.send(chatId, r);
   if (!res.generate || !res.session) return;
 
   const s = res.session;
+  await save(env.DB, "profiles", chatId, s);
   await tg.chatAction(chatId, "upload_document");
   let photo;
   if (s.photo) {
@@ -115,7 +125,8 @@ export default {
       await tg.call("setMyCommands", {
         commands: [
           { command: "start", description: "Obyektivka tayyorlashni boshlash" },
-          { command: "bekor", description: "Bekor qilish va ma'lumotlarni o'chirish" },
+          { command: "bekor", description: "Joriy to'ldirishni bekor qilish" },
+          { command: "ochirish", description: "Saqlangan ma'lumotlarimni o'chirish" },
         ],
       });
       return new Response("Webhook o'rnatildi ✅ Endi botga Telegram'da /start yozing.", {
@@ -129,5 +140,6 @@ export default {
   // Har kuni eski ma'lumotlarni o'chiradi
   async scheduled(_c: ScheduledController, env: Env) {
     await env.DB.prepare("DELETE FROM sessions WHERE updated_at < ?").bind(Date.now() - KEEP_DAYS * 86400_000).run();
+    await env.DB.prepare("DELETE FROM profiles WHERE updated_at < ?").bind(Date.now() - PROFILE_DAYS * 86400_000).run();
   },
 } satisfies ExportedHandler<Env>;

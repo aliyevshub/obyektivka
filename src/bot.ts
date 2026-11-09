@@ -7,7 +7,7 @@ import type { Script } from "./translit";
 export type Format = "docx" | "pdf";
 
 export interface Session {
-  step: "script" | "field" | "photo" | "work" | "rel" | "format";
+  step: "resume" | "script" | "field" | "photo" | "work" | "rel" | "format" | "edit";
   i: number;
   script: Script;
   data: Record<string, string>;
@@ -15,6 +15,8 @@ export interface Session {
   work: [string, string][];
   relatives: Record<string, string>[];
   rel: Record<string, string>;
+  /** Hammasi bir marta to'ldirilgan: endi har bir tahrirdan keyin xulosaga qaytamiz */
+  editing?: boolean;
 }
 
 export interface Incoming {
@@ -34,6 +36,8 @@ export interface Result {
   session: Session | null;
   replies: Reply[];
   generate?: Format[];
+  /** Saqlangan ma'lumotlarni o'chirish kerak */
+  deleteProfile?: boolean;
 }
 
 export const BTN = {
@@ -47,6 +51,13 @@ export const BTN = {
   restart: "🔄 Qaytadan boshlash",
   cyr: "Кирилл",
   lat: "Lotin",
+  edit: "✏️ Tahrirlash",
+  useSaved: "✅ Ha, davom etish",
+  fresh: "🆕 Yangidan boshlash",
+  photo: "🖼 Rasm",
+  work: "💼 Mehnat faoliyati",
+  rels: "👨‍👩‍👧 Qarindoshlar",
+  script: "🔤 Yozuv",
 } as const;
 
 const MAX_LEN = 600;
@@ -76,8 +87,41 @@ export function escapeHtml(s: string): string {
 
 // ---------- Har bir bosqich uchun savol ----------
 
+const short = (v: string | undefined, n = 80) => {
+  const t = (v ?? "").replace(/\s+/g, " ").trim();
+  return escapeHtml(t.length > n ? t.slice(0, n - 1) + "…" : t || "—");
+};
+
+/** Kiritilgan barcha ma'lumotlarning qisqa ko'rinishi */
+export function summary(s: Session): string {
+  const lines = FIELDS.filter((f) => !(f.key === "current_since" && !s.data.current_since)).map(
+    (f) => `<b>${f.label}:</b> ${short(s.data[f.key])}`,
+  );
+  lines.push(`<b>Rasm:</b> ${s.photo ? "bor ✅" : "yo'q"}`);
+  lines.push(`<b>Yozuv:</b> ${s.script === "cyr" ? "kirill" : "lotin"}`);
+  const work = s.work.length ? s.work.map(([y, t]) => `• ${escapeHtml(y)} – ${short(t, 60)}`).join("\n") : "—";
+  const rels = s.relatives.length ? s.relatives.map((r) => `• ${short(r.relation, 20)}: ${short(r.fio, 50)}`).join("\n") : "—";
+  return `📋 <b>Ma'lumotlaringiz</b>\n\n${lines.join("\n")}\n\n<b>Mehnat faoliyati:</b>\n${work}\n\n<b>Qarindoshlar:</b>\n${rels}`;
+}
+
+const EDIT_MENU = (): string[][] => [
+  ...grid(FIELDS.map((f) => f.label!), 3),
+  [BTN.photo, BTN.work],
+  [BTN.rels, BTN.script],
+  [BTN.back],
+];
+
 function prompt(s: Session): Reply {
   switch (s.step) {
+    case "resume":
+      return {
+        text:
+          `Sizda oldingi ma'lumotlar saqlangan: <b>${short(s.data.fio)}</b>.\n\n` +
+          "Ulardan foydalanib, kerakli joylarini tuzatasizmi yoki yangidan boshlaysizmi?",
+        keyboard: [[BTN.useSaved], [BTN.fresh]],
+      };
+    case "edit":
+      return { text: "Qaysi bandni tuzatamiz? ✏️", keyboard: EDIT_MENU() };
     case "script":
       return {
         text:
@@ -93,7 +137,8 @@ function prompt(s: Session): Reply {
       return {
         text:
           "<b>Rasm</b>\n3×4 rasmingizni yuboring (oddiy rasm sifatida). " +
-          "Rasm hujjatning o'ng yuqori burchagiga qo'yiladi.",
+          "Rasm hujjatning o'ng yuqori burchagiga qo'yiladi." +
+          (s.editing && s.photo ? "\n\nHozirgi rasmni olib tashlash uchun «O'tkazib yuborish» ni bosing." : ""),
         keyboard: [[BTN.skip], [BTN.back]],
       };
     case "work": {
@@ -118,6 +163,7 @@ function prompt(s: Session): Reply {
       const head = `Qarindoshlar — ${n}-qarindosh (${s.i + 1}/${RELATIVE_FIELDS.length})`;
       const r = ask(f, head, [BTN.back]);
       if (s.i === 0) {
+        if (s.relatives.length) r.keyboard!.splice(r.keyboard!.length - 1, 0, [BTN.undo]);
         r.text =
           (s.relatives.length
             ? `Qo'shilgan: ${s.relatives.map((x) => escapeHtml(x.relation)).join(", ")}.\n\nKeyingi qarindoshni qo'shing yoki «${BTN.done}» ni bosing.\n\n`
@@ -129,8 +175,8 @@ function prompt(s: Session): Reply {
     }
     case "format":
       return {
-        text: "Hammasi tayyor! ✅\nHujjatni qaysi formatda yuboray?",
-        keyboard: [[BTN.word, BTN.pdf], [BTN.both], [BTN.back, BTN.restart]],
+        text: `${summary(s)}\n\nHammasi to'g'rimi? Xato bo'lsa «${BTN.edit}» ni bosing.\nHujjatni qaysi formatda yuboray?`,
+        keyboard: [[BTN.word, BTN.pdf], [BTN.both], [BTN.edit, BTN.restart]],
       };
   }
 }
@@ -141,7 +187,8 @@ const WELCOME =
   "Assalomu alaykum! 👋\n\n" +
   "Men <b>obyektivka</b> (ma'lumotnoma) tayyorlab beraman. Savollarga birma-bir javob bering, " +
   "oxirida tayyor hujjatni <b>Word</b> yoki <b>PDF</b> ko'rinishida yuboraman.\n\n" +
-  "Xato yozsangiz «⬅️ Orqaga» tugmasi bilan qaytishingiz mumkin. Boshidan boshlash: /start";
+  "Xato yozsangiz «⬅️ Orqaga» tugmasi bilan qaytishingiz mumkin, oxirida esa istalgan bandni tuzatasiz.\n" +
+  "Ma'lumotlaringiz keyingi safar uchun saqlanadi. O'chirish: /ochirish";
 
 const VALIDATORS: Record<string, (v: string) => string | null> = {
   fio: (v) => (v.split(/\s+/).length >= 2 ? null : "Familiya va ismni to'liq yozing (kamida 2 so'z)."),
@@ -149,29 +196,68 @@ const VALIDATORS: Record<string, (v: string) => string | null> = {
   current_since: (v) => (/^\d{4}$/.test(v) ? null : "Faqat yilni yozing, masalan: 2023"),
 };
 
-export function handle(prev: Session | null, msg: Incoming): Result {
+/**
+ * @param prev  joriy suhbat holati
+ * @param saved oldin hujjat tayyorlangan bo'lsa, o'sha ma'lumotlar (faqat /start da kerak)
+ */
+export function handle(prev: Session | null, msg: Incoming, saved?: Session | null): Result {
   const text = msg.text?.trim() ?? "";
 
-  if (text === "/start" || text.startsWith("/start ") || text === BTN.restart || !prev) {
+  if (text === "/start" || text.startsWith("/start ") || !prev) {
+    if (saved) {
+      const s: Session = { ...structuredClone(saved), step: "resume", i: 0, rel: {} };
+      return { session: s, replies: [{ text: WELCOME }, prompt(s)] };
+    }
     const s = newSession();
     return { session: s, replies: [{ text: WELCOME }, prompt(s)] };
   }
+  if (text === BTN.restart) {
+    const s = newSession();
+    return { session: s, replies: [prompt(s)] };
+  }
   if (text === "/cancel" || text === "/bekor") {
-    return { session: null, replies: [{ text: "Bekor qilindi. Kiritilgan ma'lumotlar o'chirildi. Qayta boshlash: /start" }] };
+    return { session: null, replies: [{ text: "Bekor qilindi. Qayta boshlash: /start" }] };
+  }
+  if (text === "/ochirish") {
+    return {
+      session: null,
+      deleteProfile: true,
+      replies: [{ text: "Barcha ma'lumotlaringiz o'chirildi 🗑\nQayta boshlash: /start" }],
+    };
   }
 
   const s: Session = structuredClone(prev);
   const again = (warn?: string): Result => ({ session: s, replies: [...(warn ? [{ text: warn }] : []), prompt(s)] });
   const next = (): Result => ({ session: s, replies: [prompt(s)] });
+  /** Tahrirlash rejimida xulosaga, aks holda keyingi bosqichga */
+  const toSummary = (): Result => { s.step = "format"; s.i = 0; s.rel = {}; s.editing = true; return next(); };
 
   if (msg.photoId && s.step !== "photo") return again("Hozir rasm emas, matn kutilmoqda.");
   if (!text && s.step !== "photo") return again();
   if (text.length > MAX_LEN) return again(`Juda uzun (${text.length} belgi). ${MAX_LEN} belgidan qisqaroq yozing.`);
 
   switch (s.step) {
+    case "resume":
+      if (text === BTN.useSaved) return toSummary();
+      if (text === BTN.fresh) { const n = newSession(); return { session: n, replies: [prompt(n)] }; }
+      return again("Tugmalardan birini tanlang.");
+
+    case "edit": {
+      if (text === BTN.back) return toSummary();
+      const idx = FIELDS.findIndex((f) => f.label === text);
+      if (idx >= 0) { s.step = "field"; s.i = idx; return next(); }
+      if (text === BTN.photo) { s.step = "photo"; return next(); }
+      if (text === BTN.work) { s.step = "work"; return next(); }
+      if (text === BTN.rels) { s.step = "rel"; s.i = 0; s.rel = {}; return next(); }
+      if (text === BTN.script) { s.step = "script"; return next(); }
+      return again("Tugmalardan birini tanlang.");
+    }
+
     case "script":
+      if (text === BTN.back && s.editing) return toSummary();
       if (text === BTN.cyr || text === BTN.lat) {
         s.script = text === BTN.cyr ? "cyr" : "lat";
+        if (s.editing) return toSummary();
         s.step = "field"; s.i = 0;
         return next();
       }
@@ -179,6 +265,7 @@ export function handle(prev: Session | null, msg: Incoming): Result {
 
     case "field": {
       if (text === BTN.back) {
+        if (s.editing) return toSummary();
         if (s.i === 0) s.step = "script"; else s.i--;
         return next();
       }
@@ -189,6 +276,11 @@ export function handle(prev: Session | null, msg: Incoming): Result {
       const err = value && VALIDATORS[f.key]?.(value);
       if (err) return again(err);
       s.data[f.key] = value;
+      if (s.editing) {
+        // Ish joyi o'zgarsa, "qaysi yildan" ni ham so'raymiz
+        if (f.key === "current_position" && value !== "Vaqtincha ishlamaydi") { s.i++; return next(); }
+        return toSummary();
+      }
       // Ishlamasa, "qaysi yildan" savolini o'tkazib yuboramiz
       if (f.key === "current_position" && value === "Vaqtincha ishlamaydi") s.i++;
       s.i++;
@@ -197,15 +289,20 @@ export function handle(prev: Session | null, msg: Incoming): Result {
     }
 
     case "photo":
-      if (msg.photoId) { s.photo = msg.photoId; s.step = "work"; return { session: s, replies: [{ text: "Rasm qabul qilindi ✅" }, prompt(s)] }; }
+      if (msg.photoId) {
+        s.photo = msg.photoId;
+        const r = s.editing ? toSummary() : ((s.step = "work"), next());
+        r.replies.unshift({ text: "Rasm qabul qilindi ✅" });
+        return r;
+      }
       if (msg.otherFile) return again("Bu rasm emas. JPG yoki PNG rasm yuboring.");
-      if (text === BTN.back) { s.step = "field"; s.i = FIELDS.length - 1; return next(); }
-      if (text === BTN.skip) { s.photo = undefined; s.step = "work"; return next(); }
+      if (text === BTN.back) { if (s.editing) return toSummary(); s.step = "field"; s.i = FIELDS.length - 1; return next(); }
+      if (text === BTN.skip) { s.photo = undefined; if (s.editing) return toSummary(); s.step = "work"; return next(); }
       return again("Rasm yuboring yoki «O'tkazib yuborish» ni bosing.");
 
     case "work": {
-      if (text === BTN.back) { s.step = "photo"; return next(); }
-      if (text === BTN.done) { s.step = "rel"; s.i = 0; s.rel = {}; return next(); }
+      if (text === BTN.back) { if (s.editing) return toSummary(); s.step = "photo"; return next(); }
+      if (text === BTN.done) { if (s.editing) return toSummary(); s.step = "rel"; s.i = 0; s.rel = {}; return next(); }
       if (text === BTN.undo) { s.work.pop(); return next(); }
       const bad: string[] = [];
       for (const line of text.split("\n").map((l) => l.trim()).filter(Boolean)) {
@@ -222,11 +319,12 @@ export function handle(prev: Session | null, msg: Incoming): Result {
 
     case "rel": {
       if (text === BTN.back) {
-        if (s.i === 0) { s.step = "work"; return next(); }
+        if (s.i === 0) { if (s.editing) return toSummary(); s.step = "work"; return next(); }
         s.i--;
         return next();
       }
-      if (text === BTN.done && s.i === 0) { s.step = "format"; return next(); }
+      if (text === BTN.done && s.i === 0) return toSummary();
+      if (text === BTN.undo && s.i === 0) { s.relatives.pop(); return next(); }
       const f = RELATIVE_FIELDS[s.i];
       s.rel[f.key] = text;
       s.i++;
@@ -235,7 +333,7 @@ export function handle(prev: Session | null, msg: Incoming): Result {
     }
 
     case "format": {
-      if (text === BTN.back) { s.step = "rel"; s.i = 0; return next(); }
+      if (text === BTN.edit || text === BTN.back) { s.step = "edit"; return next(); }
       const map: Record<string, Format[]> = { [BTN.word]: ["docx"], [BTN.pdf]: ["pdf"], [BTN.both]: ["docx", "pdf"] };
       const formats = map[text];
       if (!formats) return again("Formatni tugma orqali tanlang.");
@@ -251,7 +349,9 @@ export function handle(prev: Session | null, msg: Incoming): Result {
 /** Fayl yuborilgandan keyin ko'rsatiladigan xabar */
 export function afterSend(s: Session): Reply {
   return {
-    text: "Tayyor! 🎉 Boshqa formatda ham olishingiz yoki orqaga qaytib tuzatishingiz mumkin.",
+    text:
+      "Tayyor! 🎉 Boshqa formatda ham olishingiz yoki «✏️ Tahrirlash» orqali tuzatishingiz mumkin.\n" +
+      "Ma'lumotlaringiz saqlandi: keyingi safar /start bosib, faqat o'zgarganini yangilaysiz.",
     keyboard: prompt(s).keyboard,
   };
 }

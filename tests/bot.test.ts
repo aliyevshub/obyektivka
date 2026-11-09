@@ -6,7 +6,7 @@ import { buildDoc, parseWork } from "../src/layout";
 import { buildDocx } from "../src/docx";
 import { buildPdf } from "../src/pdf";
 import { readPhoto } from "../src/image";
-import { handle, BTN, type Session } from "../src/bot";
+import { handle, summary, BTN, type Session } from "../src/bot";
 import { FIELDS, RELATIVE_FIELDS } from "../src/fields";
 import { SAMPLE } from "./sample-data";
 
@@ -155,6 +155,73 @@ describe("suhbat", () => {
     expect(until("Onasi")).toContain("Uy bekasi");
     expect(until("O'g'li")).toContain("Maktabgacha yoshda");
     expect(until("Otasi")).not.toContain("Uy bekasi");
+  });
+
+  const finished = (): Session => ({
+    step: "format", i: 0, script: "cyr", editing: true, rel: {},
+    data: { ...SAMPLE.data }, work: [...SAMPLE.work], relatives: structuredClone(SAMPLE.relatives), photo: "P1",
+  });
+
+  it("xulosada barcha ma'lumotlar ko'rinadi", () => {
+    const text = summary(finished());
+    expect(text).toContain("Karimov Jasur");
+    expect(text).toContain("Rasm:</b> bor");
+    expect(text).toContain("Otasi");
+  });
+
+  it("tahrirlash: bitta bandni o'zgartirib xulosaga qaytadi", () => {
+    let r = say(finished(), BTN.edit);
+    expect(r.session!.step).toBe("edit");
+    r = say(r.session, "Millati");
+    expect(r.session).toMatchObject({ step: "field", i: FIELDS.findIndex((f) => f.key === "nationality") });
+    r = say(r.session, "qoraqalpoq");
+    expect(r.session!.step).toBe("format");
+    expect(r.session!.data.nationality).toBe("qoraqalpoq");
+    expect(r.replies[0].text).toContain("qoraqalpoq");
+  });
+
+  it("tahrirlash: ish joyi o'zgarsa yil ham so'raladi", () => {
+    let r = say(say(finished(), BTN.edit).session, "Ish joyi");
+    r = say(r.session, "Yangi kompaniya");
+    expect(FIELDS[r.session!.i].key).toBe("current_since");
+    r = say(r.session, "2026");
+    expect(r.session!.step).toBe("format");
+  });
+
+  it("tahrirlash: rasm, mehnat faoliyati, qarindoshlar", () => {
+    let r = say(say(finished(), BTN.edit).session, BTN.photo);
+    r = handle(r.session, { photoId: "P2" });
+    expect(r.session).toMatchObject({ step: "format", photo: "P2" });
+
+    r = say(say(r.session, BTN.edit).session, BTN.work);
+    r = say(r.session, "2026-h.v. — yangi ish");
+    r = say(r.session, BTN.done);
+    expect(r.session!.step).toBe("format");
+    expect(r.session!.work).toHaveLength(3);
+
+    r = say(say(r.session, BTN.edit).session, BTN.rels);
+    expect(r.replies[0].keyboard!.flat()).toContain(BTN.undo);
+    r = say(r.session, BTN.undo);
+    expect(r.session!.relatives).toHaveLength(2);
+    r = say(r.session, BTN.done);
+    expect(r.session!.step).toBe("format");
+  });
+
+  it("saqlangan ma'lumotlardan foydalanish", () => {
+    let r = handle(null, { text: "/start" }, finished());
+    expect(r.session!.step).toBe("resume");
+    expect(r.replies[1].text).toContain("Karimov Jasur");
+    r = say(r.session, BTN.useSaved);
+    expect(r.session!.step).toBe("format");
+    expect(r.session!.data.fio).toBe(SAMPLE.data.fio);
+
+    r = say(handle(null, { text: "/start" }, finished()).session, BTN.fresh);
+    expect(r.session).toMatchObject({ step: "script", data: {} });
+  });
+
+  it("/ochirish saqlangan ma'lumotlarni o'chiradi", () => {
+    const r = say(finished(), "/ochirish");
+    expect(r).toMatchObject({ session: null, deleteProfile: true });
   });
 
   it("/bekor ma'lumotlarni o'chiradi", () => {

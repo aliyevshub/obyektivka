@@ -2,6 +2,8 @@
 
 export interface Field {
   key: string;
+  /** Qisqa nom: tahrirlash menyusi va xulosada ko'rsatiladi */
+  label?: string;
   prompt: string;
   /** Tezkor javob tugmalari */
   options?: string[];
@@ -11,41 +13,41 @@ export interface Field {
 export const NONE = "yo'q";
 
 export const FIELDS: Field[] = [
-  { key: "fio", prompt: "Familiya, ism va otangizning ismini kiriting.", example: "Aliyev Abdulhamid Furqat o'g'li" },
+  { key: "fio", label: "F.I.O.", prompt: "Familiya, ism va otangizning ismini kiriting.", example: "Aliyev Abdulhamid Furqat o'g'li" },
   {
-    key: "current_position",
+    key: "current_position", label: "Ish joyi",
     prompt: "Hozirgi ish (o'qish) joyingiz va lavozimingiz.",
     options: ["Vaqtincha ishlamaydi"],
     example: "Andijon davlat universiteti 3-kurs talabasi",
   },
   {
-    key: "current_since",
+    key: "current_since", label: "Qaysi yildan",
     prompt: "Shu joyda qaysi yildan beri ishlaysiz (o'qiysiz)?",
     options: ["O'tkazib yuborish"],
     example: "2023",
   },
-  { key: "birth_date", prompt: "Tug'ilgan sanangiz.", example: "04.01.2006" },
-  { key: "birth_place", prompt: "Tug'ilgan joyingiz.", example: "Andijon shahar" },
-  { key: "nationality", prompt: "Millatingiz.", options: ["o'zbek", "qoraqalpoq", "tojik", "rus"] },
-  { key: "party", prompt: "Partiyaviyligingiz.", options: [NONE], example: "O'zbekiston Liberal-demokratik partiyasi a'zosi" },
-  { key: "education", prompt: "Ma'lumotingiz.", options: ["oliy", "tugallanmagan oliy", "o'rta maxsus", "o'rta"] },
+  { key: "birth_date", label: "Tug'ilgan sana", prompt: "Tug'ilgan sanangiz.", example: "04.01.2006" },
+  { key: "birth_place", label: "Tug'ilgan joy", prompt: "Tug'ilgan joyingiz.", example: "Andijon shahar" },
+  { key: "nationality", label: "Millati", prompt: "Millatingiz.", options: ["o'zbek", "qoraqalpoq", "tojik", "rus"] },
+  { key: "party", label: "Partiyaviyligi", prompt: "Partiyaviyligingiz.", options: [NONE], example: "O'zbekiston Liberal-demokratik partiyasi a'zosi" },
+  { key: "education", label: "Ma'lumoti", prompt: "Ma'lumotingiz.", options: ["oliy", "tugallanmagan oliy", "o'rta maxsus", "o'rta"] },
   {
-    key: "graduated",
+    key: "graduated", label: "Tamomlagan",
     prompt: "Qaysi o'quv yurtini tamomlagansiz (yoki o'qiyapsiz)? Bir nechta bo'lsa, har birini yangi qatorda yozing.",
     example: "2023 yil, Andijon davlat universiteti",
   },
-  { key: "specialty", prompt: "Ma'lumoti bo'yicha mutaxassisligingiz.", options: [NONE], example: "Kompyuter injiniringi" },
-  { key: "degree", prompt: "Ilmiy darajangiz.", options: [NONE], example: "iqtisodiyot fanlari nomzodi" },
-  { key: "academic_title", prompt: "Ilmiy unvoningiz.", options: [NONE], example: "dotsent" },
+  { key: "specialty", label: "Mutaxassisligi", prompt: "Ma'lumoti bo'yicha mutaxassisligingiz.", options: [NONE], example: "Kompyuter injiniringi" },
+  { key: "degree", label: "Ilmiy daraja", prompt: "Ilmiy darajangiz.", options: [NONE], example: "iqtisodiyot fanlari nomzodi" },
+  { key: "academic_title", label: "Ilmiy unvon", prompt: "Ilmiy unvoningiz.", options: [NONE], example: "dotsent" },
   {
-    key: "languages",
+    key: "languages", label: "Chet tillari",
     prompt: "Qaysi chet tillarini bilasiz?",
     options: [NONE, "rus tili", "ingliz tili", "ingliz tili, rus tili"],
   },
-  { key: "military_rank", prompt: "Harbiy (maxsus) unvoningiz.", options: [NONE], example: "zaxiradagi leytenant" },
-  { key: "awards", prompt: "Davlat mukofotlari bilan taqdirlanganmisiz (qanaqa)?", options: [NONE], example: "«Shuhrat» medali (2020)" },
+  { key: "military_rank", label: "Harbiy unvon", prompt: "Harbiy (maxsus) unvoningiz.", options: [NONE], example: "zaxiradagi leytenant" },
+  { key: "awards", label: "Mukofotlar", prompt: "Davlat mukofotlari bilan taqdirlanganmisiz (qanaqa)?", options: [NONE], example: "«Shuhrat» medali (2020)" },
   {
-    key: "deputy",
+    key: "deputy", label: "Deputatligi",
     prompt: "Xalq deputatlari Kengashi deputati yoki boshqa saylanadigan organ a'zosimisiz?",
     options: [NONE],
     example: "Andijon shahar Kengashi deputati",

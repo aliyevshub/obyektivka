@@ -11,8 +11,11 @@ Bot **Cloudflare Workers**'da ishlaydi (server shart emas), kod GitHub'da turadi
 - 3×4 **rasm** o'ng yuqori burchakka qo'yiladi (kerak bo'lsa avtomatik qirqiladi).
 - **Mehnat faoliyati** `2019-2023 — lavozim` ko'rinishida yoziladi, bir xabarda bir nechta qator yuborsa ham bo'ladi.
 - **Yaqin qarindoshlar** jadvali 2-sahifada chiqadi.
-- Har bir qadamda «⬅️ Orqaga» tugmasi bor. `/bekor` buyrug'i kiritilgan ma'lumotlarni o'chiradi.
-- Ma'lumotlar 7 kundan keyin avtomatik o'chiriladi.
+- Har bir qadamda «⬅️ Orqaga» tugmasi bor.
+- Oxirida **barcha ma'lumotlar ro'yxati** ko'rsatiladi, «✏️ Tahrirlash» orqali istalgan bandni alohida tuzatish mumkin.
+- Ma'lumotlar **keyingi safar uchun saqlanadi**: `/start` bosilganda bot ulardan foydalanishni taklif qiladi.
+- `/bekor` — joriy to'ldirishni bekor qilish, `/ochirish` — saqlangan ma'lumotlarni butunlay o'chirish.
+- Tugallanmagan to'ldirishlar 7 kundan, saqlangan ma'lumotlar esa 180 kun foydalanilmasa avtomatik o'chiriladi.
 
 ## Hujjat tuzilishi
 
