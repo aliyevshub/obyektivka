@@ -64,8 +64,27 @@ export const RELATIVE_FIELDS: Field[] = [
   {
     key: "work",
     prompt: "Ish joyi va lavozimi. Nafaqada bo'lsa yoki vafot etgan bo'lsa, shuni yozing.",
-    options: ["Nafaqada", "Uy bekasi", "Talaba", "O'quvchi"],
+    options: ["Nafaqada", "Uy bekasi", "Talaba", "O'quvchi", "Vafot etgan"],
     example: "Andijon shahar 5-maktab o'qituvchisi",
   },
   { key: "address", prompt: "Turar joyi.", example: "Andijon shahar, Navoiy ko'chasi 12-uy" },
 ];
+
+const FEMALE = new Set(["Onasi", "Opasi", "Singlisi", "Qizi", "Qaynonasi"]);
+
+/** "Ish joyi" savoli uchun qarindoshlikka mos tugmalar */
+export function workOptions(relation: string): string[] {
+  const female = FEMALE.has(relation);
+  switch (relation) {
+    case "Otasi": case "Onasi": case "Qaynotasi": case "Qaynonasi":
+      return female ? ["Nafaqada", "Uy bekasi", "Vafot etgan"] : ["Nafaqada", "Vafot etgan"];
+    case "Akasi": case "Ukasi": case "Opasi": case "Singlisi":
+      return female ? ["Uy bekasi", "Talaba", "O'quvchi", "Vafot etgan"] : ["Talaba", "O'quvchi", "Harbiy xizmatda", "Vafot etgan"];
+    case "O'g'li": case "Qizi":
+      return ["O'quvchi", "Talaba", "Maktabgacha yoshda"];
+    case "Turmush o'rtog'i":
+      return ["Uy bekasi", "Talaba", "Vaqtincha ishlamaydi"];
+    default:
+      return RELATIVE_FIELDS.find((f) => f.key === "work")!.options!;
+  }
+}

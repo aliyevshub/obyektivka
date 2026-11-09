@@ -142,6 +142,21 @@ describe("suhbat", () => {
     expect(FIELDS[r.session!.i].key).toBe("birth_date");
   });
 
+  it("ish joyi tugmalari qarindoshlikka mos", () => {
+    let r = say(say(null, "/start").session, BTN.cyr);
+    r.session!.step = "rel"; r.session!.i = 0;
+    const until = (relation: string) => {
+      let x = say(r.session, relation);
+      x = say(x.session, "Aliyev Karim");
+      x = say(x.session, "1970 yil, Andijon");
+      return x.replies[0].keyboard!.flat();
+    };
+    expect(until("Otasi")).toEqual(["Nafaqada", "Vafot etgan", BTN.back]);
+    expect(until("Onasi")).toContain("Uy bekasi");
+    expect(until("O'g'li")).toContain("Maktabgacha yoshda");
+    expect(until("Otasi")).not.toContain("Uy bekasi");
+  });
+
   it("/bekor ma'lumotlarni o'chiradi", () => {
     const r = say(say(null, "/start").session, "/bekor");
     expect(r.session).toBeNull();

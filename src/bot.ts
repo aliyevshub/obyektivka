@@ -1,6 +1,6 @@
 // Suhbat mantig'i: Telegram'ga bog'liq emas, shuning uchun testlarda oson tekshiriladi.
 // Kiruvchi xabar + joriy holat -> yangi holat + javoblar.
-import { FIELDS, RELATIVE_FIELDS, type Field } from "./fields";
+import { FIELDS, RELATIVE_FIELDS, workOptions, type Field } from "./fields";
 import { parseWork } from "./layout";
 import type { Script } from "./translit";
 
@@ -112,7 +112,8 @@ function prompt(s: Session): Reply {
       };
     }
     case "rel": {
-      const f = RELATIVE_FIELDS[s.i];
+      let f = RELATIVE_FIELDS[s.i];
+      if (f.key === "work") f = { ...f, options: workOptions(s.rel.relation ?? "") };
       const n = s.relatives.length + 1;
       const head = `Qarindoshlar — ${n}-qarindosh (${s.i + 1}/${RELATIVE_FIELDS.length})`;
       const r = ask(f, head, [BTN.back]);
