@@ -1,0 +1,20 @@
+name = "obyektivka-bot"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# Shriftlar Worker ichiga ikkilik ma'lumot sifatida joylanadi
+rules = [{ type = "Data", globs = ["**/*.ttf"], fallthrough = true }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "obyektivka"
+# GitHub Actions deploy paytida bu qiymatni o'zi to'ldiradi (README ga qarang)
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+# Har kuni 7 kundan eski ma'lumotlarni o'chirish
+[triggers]
+crons = ["17 3 * * *"]
+
+[observability]
+enabled = true
