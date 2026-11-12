@@ -4,7 +4,7 @@ import { zipSync, strToU8 } from "fflate";
 import type { Doc, Photo } from "./layout";
 
 const FONT = "Times New Roman";
-const SZ = 26; // 13 pt (yarim punktlarda)
+const SZ = 28; // 14 pt (yarim punktlarda)
 const CM = 567; // 1 sm twip'larda
 const EMU_CM = 360000;
 
@@ -86,7 +86,7 @@ function picture(p: Photo): string {
 }
 
 // A4: 21 sm, chap 2.5 sm, o'ng 1.5 sm => 17 sm matn kengligi
-const TEXT_W = 17 * CM;
+const TEXT_W = 16.5 * CM;
 
 function body(d: Doc, photo?: Photo): string {
   const parts: string[] = [];
@@ -137,8 +137,8 @@ function body(d: Doc, photo?: Photo): string {
   if (d.relatives.length) {
     parts.push(`<w:p><w:r><w:br w:type="page"/></w:r></w:p>`);
     parts.push(para(d.relTitle, { bold: true, size: 28, align: "center", after: 12 }));
-    const w = [3.0, 3.7, 3.3, 3.7, 3.3].map((x) => Math.round(x * CM));
-    const small = { size: 22 };
+    const w = [2.9, 3.6, 3.2, 3.6, 3.2].map((x) => Math.round(x * CM));
+    const small = { size: 24 }; // 12 pt
     parts.push(
       table(
         w,
@@ -153,7 +153,7 @@ function body(d: Doc, photo?: Photo): string {
 
   const sect =
     `<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>` +
-    `<w:pgMar w:top="${Math.round(1.5 * CM)}" w:right="${Math.round(1.5 * CM)}" w:bottom="${Math.round(1.5 * CM)}" w:left="${Math.round(2.5 * CM)}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>`;
+    `<w:pgMar w:top="${Math.round(2 * CM)}" w:right="${Math.round(1.5 * CM)}" w:bottom="${Math.round(2 * CM)}" w:left="${Math.round(3 * CM)}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>`;
   return parts.join("") + sect;
 }
 

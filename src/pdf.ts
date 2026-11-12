@@ -10,9 +10,9 @@ export interface Fonts {
 
 const CM = 72 / 2.54;
 const PAGE_W = 595.28, PAGE_H = 841.89;
-const ML = 2.5 * CM, MR = 1.5 * CM, MT = 1.5 * CM, MB = 1.5 * CM;
+const ML = 3 * CM, MR = 1.5 * CM, MT = 2 * CM, MB = 2 * CM;
 const TEXT_W = PAGE_W - ML - MR;
-const SIZE = 13, BIG = 14, SMALL = 11;
+const SIZE = 14, BIG = 14, SMALL = 12;
 const lh = (size: number) => size * 1.18;
 
 function wrap(text: string, font: PDFFont, size: number, width: number): string[] {
@@ -132,7 +132,7 @@ export async function buildPdf(d: Doc, fonts: Fonts, photo?: Photo): Promise<Uin
   if (d.relatives.length) {
     w.newPage();
     w.y -= w.text(d.relTitle, { font: bold, size: BIG, x: ML, width: TEXT_W, align: "center" }) + 14;
-    const colsCm = [3.0, 3.7, 3.3, 3.7, 3.3];
+    const colsCm = [2.9, 3.6, 3.2, 3.6, 3.2];
     const k = TEXT_W / colsCm.reduce((a, b) => a + b, 0) / CM;
     const cols = colsCm.map((c) => c * CM * k);
     const pad = 4;
