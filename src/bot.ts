@@ -10,7 +10,7 @@ import { toScript, type Script } from "./translit";
 export const PRICE = "9 000 so'm";
 
 export interface Session {
-  step: "resume" | "script" | "field" | "photo" | "work" | "rel" | "format" | "edit" | "pay" | "promo" | "waiting" | "done";
+  step: "resume" | "script" | "field" | "photo" | "work" | "rel" | "format" | "edit" | "pay" | "waiting" | "done";
   i: number;
   script: Script;
   data: Record<string, string>;
@@ -80,7 +80,6 @@ export const BTN = {
   rels: "👨‍👩‍👧 Qarindoshlar",
   script: "🔤 Yozuv",
   toPay: "✅ Hammasi to'g'ri, to'lovga o'tish",
-  promo: "🎟 Promokod kiritish",
 } as const;
 
 const SCRIPT_NAMES: Record<Script, string> = { cyr: "kirill", lat: "lotin", new: "yangi lotin" };
@@ -181,7 +180,7 @@ function prompt(s: Session, ctx: Context = {}): Reply[] {
       return [{
         raw: true,
         text:
-          "Ҳужжат қайси ёзувда бўлсин?\nHujjat qaysi yozuvda bo'lsin?\n\n" +
+          "Hujjat qaysi yozuvda bo'lsin?\n\n" +
           "<b>Кирилл</b> — Маълумотнома\n<b>Lotin</b> — Ma'lumotnoma\n<b>Yangi lotin</b> — ş, ç, ö, ğ harflari bilan\n\n" +
           "Javoblarni istalgan yozuvda yozavering — bot ularni tanlangan yozuvga o'zi o'giradi.",
         keyboard: [[BTN.cyr, BTN.lat, BTN.newLat]],
@@ -252,13 +251,10 @@ function prompt(s: Session, ctx: Context = {}): Reply[] {
             ? `Quyidagi kartaga o'tkazing:\n<code>${k(escapeHtml(card))}</code>` + (owner ? `\n${k(escapeHtml(owner))}` : "") + "\n\n"
             : "") +
           "To'lovdan so'ng <b>to'lov chekini (skrinshot)</b> shu yerga rasm qilib yuboring. " +
-          "Administrator tekshirib tasdiqlagach, hujjatlaringiz avtomatik yuboriladi.\n\n" +
-          `Promokodingiz bo'lsa, «${k(BTN.promo)}» tugmasini bosing.`,
-        keyboard: [[BTN.promo], [BTN.back]],
+          "Administrator tekshirib tasdiqlagach, hujjatlaringiz avtomatik yuboriladi.",
+        keyboard: [[BTN.back]],
       }];
     }
-    case "promo":
-      return [{ text: "🎟 Promokodni yozib yuboring:", keyboard: [[BTN.back]] }];
     case "waiting":
       return [{ text: "⏳ To'lov chekingiz tekshirilmoqda. Administrator tasdiqlagach, hujjatlaringiz avtomatik yuboriladi." }];
     case "done":
@@ -438,7 +434,17 @@ function route(prev: Session | null, msg: Incoming, ctx: Context): Result {
 
     case "pay": {
       if (text === BTN.back) return toSummary();
-      if (text === BTN.promo) { s.step = "promo"; return next(); }
+      // Yashirin promokod: tugma yo'q, kodni biladigan foydalanuvchi shunchaki yozib yuboradi
+      const code = ctx.promoCode?.trim();
+      if (text && code && text.toUpperCase() === code.toUpperCase()) {
+        s.step = "done";
+        return {
+          session: s,
+          generate: true,
+          promoUsed: code,
+          replies: [{ text: "✅ <b>Siz bepul promokoddan foydalandingiz.</b>\nHujjatlaringiz tayyorlanmoqda… ⏳" }],
+        };
+      }
       if (msg.photoId) {
         if (msg.isReceipt === false)
           return again(
@@ -461,20 +467,6 @@ function route(prev: Session | null, msg: Incoming, ctx: Context): Result {
       return again("To'lov chekini rasm (skrinshot) sifatida yuboring.");
     }
 
-    case "promo": {
-      if (text === BTN.back) { s.step = "pay"; return next(); }
-      const code = ctx.promoCode?.trim();
-      if (code && text.toUpperCase() === code.toUpperCase()) {
-        s.step = "done";
-        return {
-          session: s,
-          generate: true,
-          promoUsed: code,
-          replies: [{ text: "✅ <b>Siz bepul promokoddan foydalandingiz.</b>\nHujjatlaringiz tayyorlanmoqda… ⏳" }],
-        };
-      }
-      return again("❌ Promokod noto'g'ri. Qayta tekshirib yozing.");
-    }
   }
   return next();
 }

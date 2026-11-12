@@ -240,7 +240,7 @@ async function onMessage(env: Env, tg: Telegram, m: TgMessage, origin: string) {
   // Saqlangan ma'lumotlar faqat /start da kerak
   const isStart = !prev || /^\/start\b/.test(incoming.text ?? "");
   const saved = isStart ? await load(env.DB, "profiles", chatId) : null;
-  const promoCode = prev?.step === "promo" ? await getSetting(env.DB, "promo_code") : null;
+  const promoCode = prev?.step === "pay" && incoming.text ? await getSetting(env.DB, "promo_code") : null;
   if (prev?.step === "pay" && incoming.photoId) incoming.isReceipt = await looksLikeReceipt(env, tg, m);
 
   const res = handle(prev, incoming, {

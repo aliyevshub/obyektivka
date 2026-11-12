@@ -9,7 +9,7 @@ Bot **Cloudflare Workers**'da ishlaydi (server shart emas), kod GitHub'da turadi
 
 - Hujjat **kirill**, **lotin** yoki **yangi lotin** (ş, ç, ö, ğ) yozuvida. Bot xabarlari ham tanlangan yozuvda chiqadi; foydalanuvchi istalgan yozuvda yozsa ham, javoblar tanlangan yozuvga o'giriladi.
 - **Pullik xizmat (9 000 so'm, Word + PDF).** To'lovdan oldin ogohlantirish va tahrirlash imkoniyati; foydalanuvchi chek skrinshotini yuboradi, Workers AI rasm chekka o'xshashini tekshiradi, administrator Telegram'da «Tasdiqlash / Rad etish» tugmasini bosgach hujjat yuboriladi.
-- **Promokod.** Administrator `/kod YANGIKOD` bilan o'rnatadi (eski kod bekor bo'ladi), `/kod` — amaldagi kod va ishlatilish soni. Kod ishlatilganda administratorga xabar keladi.
+- **Yashirin promokod.** To'lov sahifasida tugma yoki yozuv yo'q: kodni biladigan foydalanuvchi uni shunchaki xabar qilib yuboradi. Administrator `/kod YANGIKOD` bilan o'rnatadi (eski kod bekor bo'ladi), `/kod` — amaldagi kod va ishlatilish soni. Kod ishlatilganda administratorga xabar keladi.
 - 3×4 **rasm** o'ng yuqori burchakka qo'yiladi (kerak bo'lsa avtomatik qirqiladi).
 - **Mehnat faoliyati** `2019-2023 — lavozim` ko'rinishida yoziladi, bir xabarda bir nechta qator yuborsa ham bo'ladi.
 - **Yaqin qarindoshlar** jadvali 2-sahifada chiqadi.

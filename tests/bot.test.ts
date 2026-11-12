@@ -256,13 +256,16 @@ describe("suhbat", () => {
     expect(r.session).toMatchObject({ step: "script", data: {} });
   });
 
-  it("promokod: to'g'ri kod bepul beradi, noto'g'risi rad etiladi", () => {
+  it("yashirin promokod: to'g'ri kod bepul beradi, noto'g'risi sezdirmaydi", () => {
     const ctx = { promoCode: "BEPUL2026" };
     let r = handle(finished(), { text: BTN.toPay }, ctx);
-    r = handle(r.session, { text: BTN.promo }, ctx);
-    expect(r.session!.step).toBe("promo");
+    expect(r.session!.step).toBe("pay");
+    // To'lov sahifasida promokod haqida hech narsa yo'q
+    expect(r.replies[0].text.toLowerCase()).not.toContain("promokod");
+    expect(r.replies[0].keyboard).toEqual([[BTN.back]]);
     r = handle(r.session, { text: "noto'g'ri" }, ctx);
-    expect(r.replies[0].text).toContain("noto");
+    expect(r.replies[0].text.toLowerCase()).not.toContain("promokod");
+    expect(r.replies[0].text).toContain("chekini");
     expect(r.generate).toBeUndefined();
     r = handle(r.session, { text: "bepul2026" }, ctx);
     expect(r).toMatchObject({ generate: true, promoUsed: "BEPUL2026", session: { step: "done" } });
@@ -270,10 +273,9 @@ describe("suhbat", () => {
   });
 
   it("promokod o'rnatilmagan bo'lsa, hech qanday kod ishlamaydi", () => {
-    let r = say(say(finished(), BTN.toPay).session, BTN.promo);
-    r = say(r.session, "");
-    r = handle(r.session, { text: "BEPUL" }, { promoCode: null });
+    const r = handle(say(finished(), BTN.toPay).session, { text: "BEPUL" }, { promoCode: null });
     expect(r.generate).toBeUndefined();
+    expect(r.session!.step).toBe("pay");
   });
 
   it("to'lov sahifasida karta va narx ko'rinadi", () => {
@@ -287,7 +289,7 @@ describe("suhbat", () => {
     const cyr = handle({ ...finished(), script: "cyr" }, { text: BTN.toPay }, {});
     expect(cyr.replies[0].text).toContain("Хизмат нархи");
     expect(cyr.replies[0].text).toContain("Word");
-    expect(cyr.replies[0].keyboard).toEqual([[BTN.promo], [BTN.back]]);
+    expect(cyr.replies[0].keyboard).toEqual([[BTN.back]]);
 
     const nw = handle({ ...finished(), script: "new" }, { text: BTN.edit }, {});
     expect(nw.replies[0].text).toContain("tuzatamiz");
@@ -316,6 +318,8 @@ describe("suhbat", () => {
     expect(r.replies[0].text).toContain("9 000");
     expect(r.replies[0].text).toContain("yangi lotin");
     expect(r.replies[0].text).toContain("янги лотин");
+    expect(r.replies[1].text.startsWith("Hujjat qaysi yozuvda")).toBe(true);
+    expect(r.replies[1].text).not.toContain("Ҳужжат қайси");
     expect(r.replies[1].keyboard).toEqual([[BTN.cyr, BTN.lat, BTN.newLat]]);
   });
 
