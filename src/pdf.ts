@@ -132,13 +132,14 @@ export async function buildPdf(d: Doc, fonts: Fonts, photo?: Photo): Promise<Uin
   if (d.relatives.length) {
     w.newPage();
     w.y -= w.text(d.relTitle, { font: bold, size: BIG, x: ML, width: TEXT_W, align: "center" }) + 14;
-    const colsCm = [2.9, 3.6, 3.2, 3.6, 3.2];
+    const colsCm = [3.2, 3.5, 3.1, 3.5, 3.2];
     const k = TEXT_W / colsCm.reduce((a, b) => a + b, 0) / CM;
     const cols = colsCm.map((c) => c * CM * k);
     const pad = 4;
 
     const drawRow = (cells: string[], header: boolean) => {
       const font = (i: number) => (header || i === 0 ? bold : reg);
+      const SMALL = header ? 11 : 12;
       const h = Math.max(...cells.map((c, i) => w.text(c, { font: font(i), size: SMALL, x: 0, width: cols[i] - pad * 2, draw: false }))) + pad * 2;
       return {
         h,

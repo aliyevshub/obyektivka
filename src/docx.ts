@@ -85,7 +85,7 @@ function picture(p: Photo): string {
   );
 }
 
-// A4: 21 sm, chap 2.5 sm, o'ng 1.5 sm => 17 sm matn kengligi
+// A4: 21 sm, chap 3 sm, o'ng 1.5 sm => 16.5 sm matn kengligi
 const TEXT_W = 16.5 * CM;
 
 function body(d: Doc, photo?: Photo): string {
@@ -137,13 +137,13 @@ function body(d: Doc, photo?: Photo): string {
   if (d.relatives.length) {
     parts.push(`<w:p><w:r><w:br w:type="page"/></w:r></w:p>`);
     parts.push(para(d.relTitle, { bold: true, size: 28, align: "center", after: 12 }));
-    const w = [2.9, 3.6, 3.2, 3.6, 3.2].map((x) => Math.round(x * CM));
+    const w = [3.2, 3.5, 3.1, 3.5, 3.2].map((x) => Math.round(x * CM));
     const small = { size: 24 }; // 12 pt
     parts.push(
       table(
         w,
         [
-          tr(d.relHeaders.map((h, i) => cell(w[i], para(h, { ...small, bold: true, align: "center" }), { vAlign: "center" })).join(""), true),
+          tr(d.relHeaders.map((h, i) => cell(w[i], para(h, { size: 22, bold: true, align: "center" }), { vAlign: "center" })).join(""), true),
           ...d.relatives.map((r) => tr(r.map((v, i) => cell(w[i], para(v, { ...small, bold: i === 0 }))).join(""))),
         ],
         ALL_BORDERS,
