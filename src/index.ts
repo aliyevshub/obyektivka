@@ -26,6 +26,17 @@ export interface Env {
   TELEGRAM_API?: string;
 }
 
+/** Bot profilidagi qisqa tavsif (120 belgigacha) */
+const SHORT_DESCRIPTION = "Ishga kirish uchun obyektivka (ma'lumotnoma) tayyorlash xizmati. Word va PDF formatida.";
+/** Botni birinchi ochganda ko'rinadigan tavsif (512 belgigacha) */
+const DESCRIPTION =
+  "Ushbu bot ishga kirish uchun zarur bo'lgan obyektivka (ma'lumotnoma) hujjatini tayyorlab beradi.\n\n" +
+  "📝 Ma'lumotlar savol-javob tarzida kiritiladi.\n" +
+  "🖼 3×4 rasm hujjatga joylashtiriladi.\n" +
+  "🔤 Hujjat kirill, lotin yoki yangi lotin yozuvida tayyorlanadi.\n" +
+  "📄 Tayyor hujjat Word va PDF formatida taqdim etiladi.\n\n" +
+  "Boshlash uchun «Start» tugmasini bosing.";
+
 /** Tugallanmagan suhbatlar shuncha kundan keyin o'chiriladi */
 const KEEP_DAYS = 7;
 /** Saqlangan ma'lumotlar oxirgi foydalanishdan shuncha kun o'tib o'chiriladi */
@@ -166,25 +177,48 @@ function isAdmin(env: Env, id?: number) {
   return !!id && String(id) === String(env.ADMIN_ID).trim();
 }
 
+async function setPromo(env: Env, tg: Telegram, chatId: number, code: string) {
+  if (!/^[\p{L}\p{N}_-]{2,40}$/u.test(code)) {
+    await tg.send(chatId, { text: "❌ Promokod faqat harf, raqam, _ va - belgilaridan iborat bo'lsin (2–40 belgi). Qaytadan yozing:" });
+    return false;
+  }
+  await setSetting(env.DB, "promo_code", code);
+  await setSetting(env.DB, "promo_uses", "0");
+  await tg.send(chatId, { text: `✅ Yangi promokod o'rnatildi: <code>${escapeHtml(code)}</code>\nEski promokod bekor qilindi.` });
+  return true;
+}
+
 async function adminCommand(env: Env, tg: Telegram, m: TgMessage): Promise<boolean> {
   const text = (m.text ?? "").trim();
-  if (!isAdmin(env, m.from?.id) || !/^\/kod\b/i.test(text)) return false;
-  const arg = text.replace(/^\/kod\S*\s*/i, "").trim();
-  if (arg) {
-    if (!/^[\p{L}\p{N}_-]{2,40}$/u.test(arg)) {
-      await tg.send(m.chat.id, { text: "❌ Promokod faqat harf, raqam, _ va - belgilaridan iborat bo'lsin (2–40 belgi)." });
+  if (!isAdmin(env, m.from?.id) || !text) return false;
+
+  // /kod_ozgartirish dan keyin keladigan xabar — yangi kod
+  if (await getSetting(env.DB, "admin_awaiting_code")) {
+    if (text.startsWith("/")) {
+      await env.DB.prepare("DELETE FROM settings WHERE key = 'admin_awaiting_code'").run();
+    } else {
+      if (await setPromo(env, tg, m.chat.id, text)) {
+        await env.DB.prepare("DELETE FROM settings WHERE key = 'admin_awaiting_code'").run();
+      }
       return true;
     }
-    await setSetting(env.DB, "promo_code", arg);
-    await setSetting(env.DB, "promo_uses", "0");
-    await tg.send(m.chat.id, { text: `✅ Yangi promokod o'rnatildi: <code>${escapeHtml(arg)}</code>\nEski promokod bekor qilindi.` });
+  }
+  if (/^\/kod_ozgartirish\b/i.test(text)) {
+    await setSetting(env.DB, "admin_awaiting_code", "1");
+    await tg.send(m.chat.id, { text: "✏️ Yangi promokodni yozing:\n\n<i>Bekor qilish uchun istalgan buyruqni yuboring, masalan /kod</i>" });
+    return true;
+  }
+  if (!/^\/kod\b/i.test(text)) return false;
+  const arg = text.replace(/^\/kod\S*\s*/i, "").trim();
+  if (arg) {
+    await setPromo(env, tg, m.chat.id, arg);
   } else {
     const code = await getSetting(env.DB, "promo_code");
     const uses = (await getSetting(env.DB, "promo_uses")) ?? "0";
     await tg.send(m.chat.id, {
       text: code
-        ? `🎟 Amaldagi promokod: <code>${escapeHtml(code)}</code>\nIshlatilgan: <b>${uses}</b> marta\n\nYangi kod: <code>/kod YANGIKOD</code>`
-        : "Promokod hali o'rnatilmagan.\nO'rnatish: <code>/kod YANGIKOD</code>",
+        ? `🎟 Amaldagi promokod: <code>${escapeHtml(code)}</code>\nIshlatilgan: <b>${uses}</b> marta\n\nO'zgartirish: /kod_ozgartirish`
+        : "Promokod hali o'rnatilmagan.\nO'rnatish: /kod_ozgartirish",
     });
   }
   return true;
@@ -327,13 +361,24 @@ export default {
         allowed_updates: ["message", "callback_query"],
         drop_pending_updates: true,
       });
+      const common = [
+        { command: "start", description: "Obyektivka tayyorlashni boshlash" },
+        { command: "bekor", description: "Joriy to'ldirishni bekor qilish" },
+        { command: "ochirish", description: "Saqlangan ma'lumotlarimni o'chirish" },
+      ];
+      await tg.call("setMyCommands", { commands: common });
+      // Administrator menyusida promokod buyruqlari ham bor (boshqalarga ko'rinmaydi)
       await tg.call("setMyCommands", {
+        scope: { type: "chat", chat_id: Number(env.ADMIN_ID) },
         commands: [
-          { command: "start", description: "Obyektivka tayyorlashni boshlash" },
-          { command: "bekor", description: "Joriy to'ldirishni bekor qilish" },
-          { command: "ochirish", description: "Saqlangan ma'lumotlarimni o'chirish" },
+          common[0],
+          { command: "kod", description: "Amaldagi promokod va ishlatilish soni" },
+          { command: "kod_ozgartirish", description: "Promokodni o'zgartirish" },
+          ...common.slice(1),
         ],
-      });
+      }).catch((e) => console.error("Admin menyusi o'rnatilmadi:", e));
+      await tg.call("setMyShortDescription", { short_description: SHORT_DESCRIPTION });
+      await tg.call("setMyDescription", { description: DESCRIPTION });
       return new Response("Webhook o'rnatildi ✅ Endi botga Telegram'da /start yozing.", {
         headers: { "content-type": "text/plain; charset=utf-8" },
       });
