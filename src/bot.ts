@@ -282,7 +282,7 @@ const WELCOME_LAT =
 
 const WELCOME: Reply = {
   raw: true,
-  text: `${localize(WELCOME_LAT, "lat")}\n\n— — —\n\n${localize(WELCOME_LAT, "cyr")}`,
+  text: localize(WELCOME_LAT, "lat"),
 };
 
 // ---------- Tekshiruvlar ----------

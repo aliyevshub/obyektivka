@@ -327,7 +327,8 @@ describe("suhbat", () => {
     const r = say(null, "/start");
     expect(r.replies[0].text).toContain("9 000");
     expect(r.replies[0].text).toContain("yangi lotin");
-    expect(r.replies[0].text).toContain("янги лотин");
+    expect(r.replies[0].text).not.toContain("янги лотин");
+    expect(r.replies[0].text).not.toContain("— — —");
     expect(r.replies[1].text.startsWith("Hujjat qaysi yozuvda")).toBe(true);
     expect(r.replies[1].text).not.toContain("Ҳужжат қайси");
     expect(r.replies[1].keyboard).toEqual([[BTN.cyr, BTN.lat, BTN.newLat]]);
