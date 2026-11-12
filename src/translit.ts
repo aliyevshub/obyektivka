@@ -1,7 +1,8 @@
 // O'zbek lotin <-> kirill o'girish.
 // Foydalanuvchi qaysi yozuvda yozmasin, hujjat bitta tanlangan yozuvda chiqadi.
 
-export type Script = "cyr" | "lat";
+/** cyr — kirill, lat — amaldagi lotin, new — yangi lotin loyihasi (ş, ç, ö, ğ) */
+export type Script = "cyr" | "lat" | "new";
 
 const APOS = "'’‘`ʻʼ";
 const isApos = (c: string | undefined) => !!c && APOS.includes(c);
@@ -21,9 +22,9 @@ function matchCase(src: string, out: string): string {
 }
 
 /** Lotin yozuvidagi so'zni kirillga o'giradi. */
-function latWordToCyr(w: string): string {
+function latWordToCyr(w: string, keepAbbr = true): string {
   // Lotincha qisqartmalar (KUAF, IT, TATU) o'zgarmaydi
-  if (w.length >= 2 && w === w.toUpperCase() && /^[A-Z]+$/.test(w) && w.length <= 5) return w;
+  if (keepAbbr && w.length >= 2 && w === w.toUpperCase() && /^[A-Z]+$/.test(w) && w.length <= 5) return w;
   let out = "";
   for (let i = 0; i < w.length; i++) {
     const c = w[i], lc = c.toLowerCase(), n = w[i + 1]?.toLowerCase(), prev = w[i - 1];
@@ -76,13 +77,52 @@ function cyrWordToLat(w: string): string {
   return out;
 }
 
-const hasCyr = (s: string) => /[Ѐ-ӿ]/.test(s);
-const hasLat = (s: string) => /[A-Za-z]/.test(s);
+// ---------- Yangi lotin alifbosi: sh -> ş, ch -> ç, o' -> ö, g' -> ğ ----------
+
+const APOS_CLASS = "['’‘`ʻʼ]";
+const isUpperWord = (w: string) => w.length > 1 && w === w.toUpperCase() && w !== w.toLowerCase();
+
+function latWordToNew(w: string): string {
+  const up = isUpperWord(w);
+  return w
+    .replace(new RegExp(`([OoGg])${APOS_CLASS}`, "g"), (_, c: string) => ({ o: "ö", O: "Ö", g: "ğ", G: "Ğ" })[c]!)
+    .replace(/[Ss][Hh]|[Cc][Hh]/g, (m) => {
+      const n = m[0].toLowerCase() === "s" ? "ş" : "ç";
+      return m[0] === m[0].toUpperCase() || up ? n.toUpperCase() : n;
+    });
+}
+
+function newWordToLat(w: string): string {
+  const up = isUpperWord(w);
+  return w.replace(/[şŞçÇöÖğĞ]/g, (c) => {
+    const m: Record<string, string> = { ş: "sh", ç: "ch", ö: "o'", ğ: "g'" };
+    const low = m[c.toLowerCase()];
+    if (c === c.toLowerCase()) return low;
+    return up ? low.toUpperCase() : low[0].toUpperCase() + low.slice(1);
+  });
+}
+
+const hasCyr = (s: string) => /[\u0400-\u04FF]/.test(s);
+const hasLat = (s: string) => /[A-Za-zşŞçÇöÖğĞ]/.test(s);
+const hasNew = (s: string) => /[şŞçÇöÖğĞ]/.test(s);
+
+export interface ScriptOptions {
+  /** Katta harfli lotin qisqartmalarni (KUAF, TATU) o'zgartirmaslik. Hujjat uchun true, bot xabarlari uchun false. */
+  keepAbbr?: boolean;
+}
 
 /** Matnni tanlangan yozuvga keltiradi. Qisman aralash matnlarda har bir so'z alohida o'giriladi. */
-export function toScript(text: string, script: Script): string {
+export function toScript(text: string, script: Script, opts: ScriptOptions = {}): string {
+  const keepAbbr = opts.keepAbbr ?? true;
   return text.replace(/[\p{L}'’‘`ʻʼ]+/gu, (w) => {
-    if (script === "cyr") return hasLat(w) ? latWordToCyr(w) : w;
-    return hasCyr(w) ? cyrWordToLat(w) : w;
+    if (script === "cyr") {
+      if (!hasLat(w)) return w;
+      return latWordToCyr(hasNew(w) ? newWordToLat(w) : w, keepAbbr);
+    }
+    // Avval amaldagi lotinga keltiramiz
+    const lat = hasCyr(w) ? cyrWordToLat(w) : w;
+    if (script === "lat") return hasNew(lat) ? newWordToLat(lat) : lat;
+    if (keepAbbr && /^[A-Z]{2,5}$/.test(lat)) return lat;
+    return latWordToNew(lat);
   });
 }

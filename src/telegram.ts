@@ -25,10 +25,27 @@ export class Telegram {
       text: r.text,
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
-      reply_markup: r.keyboard
-        ? { keyboard: r.keyboard, resize_keyboard: true, is_persistent: true }
-        : { remove_keyboard: true },
+      reply_markup: Telegram.markup(r),
     });
+  }
+
+  /** Reply tugmalarini Telegram formatiga keltiradi */
+  static markup(r: Reply) {
+    return r.keyboard
+      ? { keyboard: r.keyboard, resize_keyboard: true, is_persistent: true }
+      : { remove_keyboard: true };
+  }
+
+  /** Rasm (file_id yoki URL) + izoh. Natijada yuborilgan rasmning file_id si qaytadi. */
+  async sendPhoto(chatId: number, photo: string, caption: string, reply_markup?: unknown): Promise<string | undefined> {
+    const res = await this.call<{ photo?: { file_id: string }[] }>("sendPhoto", {
+      chat_id: chatId,
+      photo,
+      caption,
+      parse_mode: "HTML",
+      ...(reply_markup ? { reply_markup } : {}),
+    });
+    return res.photo?.at(-1)?.file_id;
   }
 
   sendDocument(chatId: number, bytes: Uint8Array, filename: string, mime: string) {

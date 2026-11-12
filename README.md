@@ -7,7 +7,9 @@ Bot **Cloudflare Workers**'da ishlaydi (server shart emas), kod GitHub'da turadi
 
 ## Imkoniyatlari
 
-- Hujjat **kirill** yoki **lotin** yozuvida. Foydalanuvchi istalgan yozuvda yozsa ham, bot javoblarni tanlangan yozuvga o'zi o'giradi.
+- Hujjat **kirill**, **lotin** yoki **yangi lotin** (ş, ç, ö, ğ) yozuvida. Bot xabarlari ham tanlangan yozuvda chiqadi; foydalanuvchi istalgan yozuvda yozsa ham, javoblar tanlangan yozuvga o'giriladi.
+- **Pullik xizmat (9 000 so'm, Word + PDF).** To'lovdan oldin ogohlantirish va tahrirlash imkoniyati; foydalanuvchi chek skrinshotini yuboradi, Workers AI rasm chekka o'xshashini tekshiradi, administrator Telegram'da «Tasdiqlash / Rad etish» tugmasini bosgach hujjat yuboriladi.
+- **Promokod.** Administrator `/kod YANGIKOD` bilan o'rnatadi (eski kod bekor bo'ladi), `/kod` — amaldagi kod va ishlatilish soni. Kod ishlatilganda administratorga xabar keladi.
 - 3×4 **rasm** o'ng yuqori burchakka qo'yiladi (kerak bo'lsa avtomatik qirqiladi).
 - **Mehnat faoliyati** `2019-2023 — lavozim` ko'rinishida yoziladi, bir xabarda bir nechta qator yuborsa ham bo'ladi.
 - **Yaqin qarindoshlar** jadvali 2-sahifada chiqadi.
@@ -45,6 +47,10 @@ Repozitoriyda **Settings → Secrets and variables → Actions → New repositor
 | `BOT_TOKEN` | @BotFather bergan token |
 | `CLOUDFLARE_API_TOKEN` | 2.4-qadamdagi token |
 | `CLOUDFLARE_ACCOUNT_ID` | 2.3-qadamdagi Account ID |
+| `CARD_NUMBER` | To'lov qabul qilinadigan karta raqami |
+| `CARD_OWNER` | Karta egasining ismi (ixtiyoriy) |
+
+Administrator ID raqami `wrangler.toml` dagi `ADMIN_ID` da.
 
 ### 4. Joylash
 Kod asosiy (default) branchga tushganda GitHub Actions o'zi ishga tushadi:

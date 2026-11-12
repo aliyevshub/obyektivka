@@ -3,7 +3,15 @@ main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
 # Shriftlar Worker ichiga ikkilik ma'lumot sifatida joylanadi
-rules = [{ type = "Data", globs = ["**/*.ttf"], fallthrough = true }]
+rules = [{ type = "Data", globs = ["**/*.ttf", "**/*.jpg"], fallthrough = true }]
+
+# Administrator (cheklarni tasdiqlaydi, /kod buyrug'i)
+[vars]
+ADMIN_ID = "1295718505"
+
+# To'lov cheklarini tekshirish uchun sun'iy intellekt
+[ai]
+binding = "AI"
 
 [[d1_databases]]
 binding = "DB"

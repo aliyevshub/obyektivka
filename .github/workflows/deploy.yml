@@ -27,6 +27,8 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      CARD_NUMBER: ${{ secrets.CARD_NUMBER }}
+      CARD_OWNER: ${{ secrets.CARD_OWNER }}
     steps:
       - name: Kalitlar borligini tekshirish
         run: |
@@ -55,6 +57,11 @@ jobs:
 
       - name: Bot tokenini saqlash
         run: printf '%s' "$BOT_TOKEN" | npx wrangler secret put BOT_TOKEN
+
+      - name: To'lov kartasini saqlash
+        run: |
+          if [ -n "$CARD_NUMBER" ]; then printf '%s' "$CARD_NUMBER" | npx wrangler secret put CARD_NUMBER; else echo "::warning::CARD_NUMBER secret yo'q — botda karta raqami ko'rsatilmaydi"; fi
+          if [ -n "$CARD_OWNER" ]; then printf '%s' "$CARD_OWNER" | npx wrangler secret put CARD_OWNER; fi
 
       - name: Telegram webhook'ini ulash
         run: |
