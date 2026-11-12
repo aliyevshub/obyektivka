@@ -273,7 +273,7 @@ function prompt(s: Session, ctx: Context = {}): Reply[] {
 
 const WELCOME_LAT =
   "Assalomu alaykum! 👋\n\n" +
-  "Bu bot ishga kirish uchun <b>obyektivka (ma'lumotnoma)</b> tayyorlab beradi.\n\n" +
+  "Bu bot <b>obyektivka (ma'lumotnoma)</b> tayyorlab beradi.\n\n" +
   "📝 Savollarga birma-bir javob berasiz va 3×4 rasmingizni yuborasiz.\n" +
   "🔤 Hujjat 3 xil yozuvda tayyorlanadi: <b>kirill, lotin, yangi lotin</b>.\n" +
   `📄 Tayyor hujjat <b>${W}</b> va <b>${P}</b> ko'rinishida beriladi.\n` +

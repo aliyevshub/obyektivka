@@ -27,10 +27,10 @@ export interface Env {
 }
 
 /** Bot profilidagi qisqa tavsif (120 belgigacha) */
-const SHORT_DESCRIPTION = "Ishga kirish uchun obyektivka (ma'lumotnoma) tayyorlash xizmati. Word va PDF formatida.";
+const SHORT_DESCRIPTION = "Obyektivka (ma'lumotnoma) tayyorlash xizmati. Word va PDF formatida.";
 /** Botni birinchi ochganda ko'rinadigan tavsif (512 belgigacha) */
 const DESCRIPTION =
-  "Ushbu bot ishga kirish uchun zarur bo'lgan obyektivka (ma'lumotnoma) hujjatini tayyorlab beradi.\n\n" +
+  "Ushbu bot obyektivka (ma'lumotnoma) hujjatini tayyorlab beradi.\n\n" +
   "📝 Ma'lumotlar savol-javob tarzida kiritiladi.\n" +
   "🖼 3×4 rasm hujjatga joylashtiriladi.\n" +
   "🔤 Hujjat kirill, lotin yoki yangi lotin yozuvida tayyorlanadi.\n" +
