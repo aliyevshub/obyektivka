@@ -48,6 +48,8 @@ export interface Reply {
   raw?: boolean;
   /** Matn namuna 3×4 rasm ostida yuborilsin */
   samplePhoto?: boolean;
+  /** Xabar ostida nusxalash tugmasi (bosilganda matn nusxalanadi) */
+  copy?: { label: string; text: string };
 }
 
 export interface Result {
@@ -80,6 +82,7 @@ export const BTN = {
   rels: "👨‍👩‍👧 Qarindoshlar",
   script: "🔤 Yozuv",
   toPay: "✅ Hammasi to'g'ri, to'lovga o'tish",
+  copyCard: "📋 Karta raqamini nusxalash",
 } as const;
 
 const SCRIPT_NAMES: Record<Script, string> = { cyr: "kirill", lat: "lotin", new: "yangi lotin" };
@@ -243,17 +246,21 @@ function prompt(s: Session, ctx: Context = {}): Reply[] {
     case "pay": {
       const card = ctx.card?.number?.trim();
       const owner = ctx.card?.owner?.trim();
-      return [{
-        text:
-          `💳 <b>To'lov</b>\n\n` +
-          `Xizmat narxi: <b>${PRICE}</b> (${W} va ${P} hujjat birga).\n\n` +
-          (card
-            ? `Quyidagi kartaga o'tkazing:\n<code>${k(escapeHtml(card))}</code>` + (owner ? `\n${k(escapeHtml(owner))}` : "") + "\n\n"
-            : "") +
-          "To'lovdan so'ng <b>to'lov chekini (skrinshot)</b> shu yerga rasm qilib yuboring. " +
-          "Administrator tekshirib tasdiqlagach, hujjatlaringiz avtomatik yuboriladi.",
-        keyboard: [[BTN.back]],
-      }];
+      const head = `💳 <b>To'lov</b>\n\nXizmat narxi: <b>${PRICE}</b> (${W} va ${P} hujjat birga).`;
+      const howTo =
+        "To'lovdan so'ng <b>to'lov chekini (skrinshot)</b> shu yerga rasm qilib yuboring. " +
+        "Administrator tekshirib tasdiqlagach, hujjatlaringiz avtomatik yuboriladi.";
+      if (!card) return [{ text: `${head}\n\n${howTo}`, keyboard: [[BTN.back]] }];
+      // Bitta xabarda xabar ostidagi tugma va pastki klaviatura birga turolmaydi — ikki xabarga bo'lamiz
+      return [
+        {
+          text:
+            `${head}\n\nQuyidagi kartaga o'tkazing:\n<code>${k(escapeHtml(card))}</code>` +
+            (owner ? `\n${k(escapeHtml(owner))}` : ""),
+          copy: { label: BTN.copyCard, text: card },
+        },
+        { text: howTo, keyboard: [[BTN.back]] },
+      ];
     }
     case "waiting":
       return [{ text: "⏳ To'lov chekingiz tekshirilmoqda. Administrator tasdiqlagach, hujjatlaringiz avtomatik yuboriladi." }];

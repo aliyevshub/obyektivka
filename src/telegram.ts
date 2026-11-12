@@ -31,6 +31,7 @@ export class Telegram {
 
   /** Reply tugmalarini Telegram formatiga keltiradi */
   static markup(r: Reply) {
+    if (r.copy) return { inline_keyboard: [[{ text: r.copy.label, copy_text: { text: r.copy.text } }]] };
     return r.keyboard
       ? { keyboard: r.keyboard, resize_keyboard: true, is_persistent: true }
       : { remove_keyboard: true };

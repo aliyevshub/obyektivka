@@ -283,6 +283,16 @@ describe("suhbat", () => {
     expect(r.replies[0].text).toContain("8600 1111 2222 3333");
     expect(r.replies[0].text).toContain("ALIYEV A.");
     expect(r.replies[0].text).toContain("9 000");
+    // Karta xabari ostida nusxalash tugmasi, keyingi xabarda ko'rsatma va «Orqaga»
+    expect(r.replies[0].copy).toEqual({ label: BTN.copyCard, text: "8600 1111 2222 3333" });
+    expect(r.replies[1].text).toContain("chekini");
+    expect(r.replies[1].keyboard).toEqual([[BTN.back]]);
+  });
+
+  it("karta sozlanmagan bo'lsa, nusxalash tugmasi chiqmaydi", () => {
+    const r = handle(finished(), { text: BTN.toPay }, {});
+    expect(r.replies).toHaveLength(1);
+    expect(r.replies[0].copy).toBeUndefined();
   });
 
   it("xabarlar tanlangan yozuvda, tugmalar o'zgarmaydi", () => {
